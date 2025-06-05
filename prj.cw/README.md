@@ -7,11 +7,10 @@
 - Windows 10/11
 - Visual Studio 2019/2022 с поддержкой C++
 - CMake 3.10 или выше
-- OpenCV 4.x (установленный в C:\opencv)
-
+- OpenCV 4.x
 ## Сборка
 
-1. Убедитесь, что OpenCV установлен в C:\opencv
+1. Убедитесь, что OpenCV установлен
 2. Запустите build.bat
 3. Исполняемый файл будет создан в build/Release/
 
@@ -64,9 +63,3 @@ ShadowSegmentation.exe photo.jpg
 # Обработка изображения с тенями на асфальте
 ShadowSegmentation.exe street_scene.png
 ```
-
-## Устранение неполадок
-
-- **Ошибка OpenCV**: Убедитесь, что OpenCV установлен в C:\opencv
-- **Ошибка сборки**: Проверьте, что Visual Studio 2019/2022 установлена
-- **Файл не найден**: Проверьте путь к изображению
