@@ -10,7 +10,6 @@ cv::Mat autoContrast(const cv::Mat& image, double clipPercent) {
         gray = image.clone();
     }
 
-    // Calculate histogram
     std::vector<int> histogram(256, 0);
     for (int y = 0; y < gray.rows; y++) {
         for (int x = 0; x < gray.cols; x++) {
@@ -18,14 +17,12 @@ cv::Mat autoContrast(const cv::Mat& image, double clipPercent) {
         }
     }
 
-    // Calculate cumulative distribution
     std::vector<int> cumulative(256, 0);
     cumulative[0] = histogram[0];
     for (int i = 1; i < 256; i++) {
         cumulative[i] = cumulative[i-1] + histogram[i];
     }
 
-    // Find cut points
     int total = gray.rows * gray.cols;
     int clipCount = static_cast<int>(total * clipPercent / 100.0 / 2.0);
 
@@ -33,7 +30,6 @@ cv::Mat autoContrast(const cv::Mat& image, double clipPercent) {
     while (cumulative[minGray] < clipCount && minGray < 255) minGray++;
     while (cumulative[maxGray] >= (total - clipCount) && maxGray > 0) maxGray--;
 
-    // Calculate alpha and beta
     double alpha = 255.0 / (maxGray - minGray);
     double beta = -minGray * alpha;
 
@@ -87,4 +83,4 @@ cv::Mat claheContrast(const cv::Mat& image, double clipLimit, cv::Size tileGridS
     return result;
 }
 
-} // namespace semcv
+}

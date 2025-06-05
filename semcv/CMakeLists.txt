@@ -1,4 +1,3 @@
-# semcv library CMakeLists.txt
 set(SEMCV_SOURCES
     src/gamma_correction.cpp
     src/noise_generation.cpp
@@ -20,7 +19,6 @@ target_include_directories(semcv PUBLIC
 
 target_link_libraries(semcv ${OpenCV_LIBS})
 
-# Add test executable for semcv
 add_executable(semcv_test src/test_main.cpp)
 target_link_libraries(semcv_test semcv ${OpenCV_LIBS})
 
