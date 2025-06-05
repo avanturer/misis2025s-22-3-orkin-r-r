@@ -1,57 +1,87 @@
-# Created by https://www.toptal.com/developers/gitignore/api/c++,visualstudiocode
-# Edit at https://www.toptal.com/developers/gitignore?templates=c++,visualstudiocode
+# Build directories
+build/
+out/
+cmake-build-*/
+bin/
+lib/
+dist/
 
-### C++ ###
-# Prerequisites
-*.d
+# CMake files
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+CTestTestfile.cmake
+Makefile
+*.cmake
+!CMakeLists.txt
 
-# Compiled Object files
-*.slo
-*.lo
-*.o
-*.obj
+# Visual Studio files
+.vs/
+*.vcxproj
+*.vcxproj.filters
+*.vcxproj.user
+*.sln
+*.suo
+*.user
 
-# Precompiled Headers
-*.gch
-*.pch
-
-# Compiled Dynamic libraries
+# Compiler outputs
+*.exe
+*.dll
 *.so
 *.dylib
-*.dll
-
-# Fortran module files
-*.mod
-*.smod
-
-# Compiled Static libraries
-*.lai
-*.la
 *.a
 *.lib
+*.obj
+*.o
+*.pdb
+*.ilk
+*.exp
 
-# Executables
-*.exe
-*.out
-*.app
+# Temporary files
+*.tmp
+*.temp
+*.log
+*.cache
+*~
+*.swp
+*.swo
 
-### VisualStudioCode ###
-.vscode/*
-!.vscode/settings.json
-!.vscode/tasks.json
-!.vscode/launch.json
-!.vscode/extensions.json
-!.vscode/*.code-snippets
+# IDE files
+.vscode/
+.idea/
+*.cbp
+*.layout
+*.depend
 
-# Local History for Visual Studio Code
-.history/
+# Windows system files
+Thumbs.db
+Desktop.ini
+$RECYCLE.BIN/
 
-# Built Visual Studio Code Extensions
-*.vsix
+# macOS system files
+.DS_Store
+.AppleDouble
+.LSOverride
 
-### VisualStudioCode Patch ###
-# Ignore all local history of files
-.history
-.ionide
+# Linux system files
+*~
+.directory
 
-# End of https://www.toptal.com/developers/gitignore/api/c++,visualstudiocode
+# OpenCV DLLs (если копируются автоматически)
+opencv_*.dll
+
+# Debug info
+*.pdb
+*.idb
+
+# Package managers
+vcpkg_installed/
+conan/
+packages/
+
+# Archives
+*.zip
+*.tar
+*.tar.gz
+*.rar
+*.7z
