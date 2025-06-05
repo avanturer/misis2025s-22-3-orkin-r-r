@@ -1,73 +1,31 @@
-/**
- * @file shadowledentifier.h
- * @brief Header file for the shadow identification functionality
- * 
- * This file defines the ShadowIdentifier class which is responsible for
- * detecting and segmenting shadows in images using HSV color thresholding.
- * 
- * @author Created for course project
- * @date June 2025
- */
-
-#ifndef SHADOWIDENTIFIER_H
-#define SHADOWIDENTIFIER_H
+#ifndef SHADOWLEDENTIFIER_H
+#define SHADOWLEDENTIFIER_H
 
 #include <opencv2/opencv.hpp>
 
-/**
- * @class ShadowIdentifier
- * @brief Class for shadow detection and segmentation in images
- * 
- * This class implements shadow detection using HSV color space thresholding
- * and includes functionality for shadow mask post-processing.
- */
-class ShadowIdentifier
-{
+class ShadowLedentifier {
 public:
-    /**
-     * @brief Constructor with default HSV threshold values
-     */
-    ShadowIdentifier();
-
-    /**
-     * @brief Set the HSV threshold values for shadow detection
-     * 
-     * @param hMin Minimum hue value (0-179)
-     * @param hMax Maximum hue value (0-179)
-     * @param sMin Minimum saturation value (0-255)
-     * @param sMax Maximum saturation value (0-255)
-     * @param vMin Minimum value (brightness) value (0-255)
-     * @param vMax Maximum value (brightness) value (0-255)
-     */
-    void setHsvThresholds(int hMin, int hMax, int sMin, int sMax, int vMin, int vMax);
-
-    /**
-     * @brief Process an image to identify shadows
-     * 
-     * @param inputImage Input image in BGR color space
-     * @return cv::Mat Result image with highlighted shadows
-     */
-    cv::Mat processImage(const cv::Mat &inputImage);
-
+    ShadowLedentifier();
+    cv::Mat processImage(const cv::Mat& input);
+    
+    // Новые методы для улучшенной обработки
+    cv::Mat createHSVMask(const cv::Mat& hsv);
+    cv::Mat createLABMask(const cv::Mat& lab);
+    cv::Mat combineMasks(const cv::Mat& mask1, const cv::Mat& mask2);
+    cv::Mat filterContours(const cv::Mat& mask, int minArea = 500);
+    cv::Mat applyMorphology(const cv::Mat& mask);
+    
 private:
-    // HSV thresholds for shadow segmentation
-    int hMin, hMax, sMin, sMax, vMin, vMax;
-
-    /**
-     * @brief Apply HSV thresholding to detect shadows
-     * 
-     * @param hsvImage Input image in HSV color space
-     * @return cv::Mat Binary mask of detected shadows
-     */
-    cv::Mat applyHsvThreshold(const cv::Mat &hsvImage);
-
-    /**
-     * @brief Apply post-processing to improve the shadow mask
-     * 
-     * @param mask Initial shadow mask
-     * @return cv::Mat Improved shadow mask
-     */
-    cv::Mat postProcessMask(const cv::Mat &mask);
+    // Параметры HSV
+    int h_min, h_max;
+    int s_min, s_max;
+    int v_min, v_max;
+    
+    // Новые параметры для LAB
+    int lab_l_threshold;
+    int min_contour_area;
+    int morph_kernel_size;
+    int morph_iterations;
 };
 
-#endif // SHADOWIDENTIFIER_H
+#endif

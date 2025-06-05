@@ -1,13 +1,13 @@
 #!/bin/bash
 
-# Create build directory if it doesn't exist
+cd "$(dirname "$0")"
+
 mkdir -p build
 cd build
 
-# Run cmake
-cmake ..
+cmake .. -DCMAKE_BUILD_TYPE=Release
+make -j$(nproc)
 
-# Build the project
-make -j4
-
-echo "Build completed. Run './ShadowSegmentation' to start the application."
+echo ""
+echo "Build completed."
+echo "Run: ./ShadowSegmentation path/to/your/image.jpg"
