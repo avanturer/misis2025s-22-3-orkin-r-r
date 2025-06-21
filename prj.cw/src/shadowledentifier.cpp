@@ -1,5 +1,6 @@
 #include "shadowledentifier.h"
 #include <iostream>
+#include <filesystem>
 
 ShadowLedentifier::ShadowLedentifier() {
     // Расширенные параметры HSV для лучшего обнаружения теней
@@ -17,33 +18,68 @@ ShadowLedentifier::ShadowLedentifier() {
     morph_iterations = 1;      // Уменьшили количество итераций
 }
 
-cv::Mat ShadowLedentifier::processImage(const cv::Mat& input) {
+cv::Mat ShadowLedentifier::processImage(const cv::Mat& input, const std::string& outputPath) {
     if (input.empty()) {
-        std::cerr << "Ошибка: пустое изображение!" << std::endl;
+        std::cerr << "ERROR: Empty input image!" << std::endl;
         return cv::Mat();
     }
     
-    // Конвертируем в HSV и LAB
+    // Convert to HSV and LAB color spaces
     cv::Mat hsv, lab;
     cv::cvtColor(input, hsv, cv::COLOR_BGR2HSV);
     cv::cvtColor(input, lab, cv::COLOR_BGR2Lab);
     
-    // Создаем маски для каждого цветового пространства
+    // Create masks for each color space
     cv::Mat hsv_mask = createHSVMask(hsv);
     cv::Mat lab_mask = createLABMask(lab);
     
-    // Используем OR вместо AND для объединения масок
+    // Combine masks
     cv::Mat combined_mask;
     cv::bitwise_or(hsv_mask, lab_mask, combined_mask);
     
-    // Применяем морфологические операции
+    // Apply morphological operations
     cv::Mat morphed_mask = applyMorphology(combined_mask);
     
-    // Фильтруем мелкие контуры
+    // Filter small contours
     cv::Mat filtered_mask = filterContours(morphed_mask);
+    
+    // Save intermediate results
+    if (!outputPath.empty()) {
+        std::filesystem::create_directories(outputPath);
+        
+        std::cout << "  Saving step-by-step results to: " << outputPath << std::endl;
+        cv::imwrite(outputPath + "/step1_input.jpg", input);
+        cv::imwrite(outputPath + "/step2_hsv_mask.jpg", hsv_mask);
+        cv::imwrite(outputPath + "/step3_lab_mask.jpg", lab_mask);
+        cv::imwrite(outputPath + "/step4_combined_mask.jpg", combined_mask);
+        cv::imwrite(outputPath + "/step5_morphed_mask.jpg", morphed_mask);
+        cv::imwrite(outputPath + "/step6_filtered_mask.jpg", filtered_mask);
+        
+        cv::Mat colored_result = createColoredMask(filtered_mask, input);
+        cv::imwrite(outputPath + "/step7_final_result.jpg", colored_result);
+        
+        std::cout << "  Step-by-step results saved successfully!" << std::endl;
+    }
     
     return filtered_mask;
 }
+
+cv::Mat ShadowLedentifier::processImage(const cv::Mat& input) {
+    cv::Mat filtered_mask = processImage(input, "");
+    
+    int total_pixels = filtered_mask.rows * filtered_mask.cols;
+    int shadow_pixels = cv::countNonZero(filtered_mask);
+    double shadow_percentage = (double)shadow_pixels / total_pixels * 100;
+    
+    std::cout << "Segmentation statistics:" << std::endl;
+    std::cout << "  Total pixels: " << total_pixels << std::endl;
+    std::cout << "  Shadow pixels: " << shadow_pixels << std::endl;
+    std::cout << "  Shadow percentage: " << std::fixed << std::setprecision(2) << shadow_percentage << "%" << std::endl;
+    
+    return filtered_mask;
+}
+
+
 
 cv::Mat ShadowLedentifier::createHSVMask(const cv::Mat& hsv) {
     // Создаем маску только по яркости (V канал)
@@ -106,4 +142,18 @@ cv::Mat ShadowLedentifier::filterContours(const cv::Mat& mask, int minArea) {
     }
     
     return filtered;
+}
+
+cv::Mat ShadowLedentifier::createColoredMask(const cv::Mat& mask, const cv::Mat& original) {
+    cv::Mat colored_result;
+    original.copyTo(colored_result);
+    
+    // Создаем цветную маску (красный цвет для теней)
+    cv::Mat colored_mask = cv::Mat::zeros(original.size(), CV_8UC3);
+    colored_mask.setTo(cv::Scalar(0, 0, 255), mask); // Красный цвет
+    
+    // Накладываем маску с прозрачностью
+    cv::addWeighted(colored_result, 0.7, colored_mask, 0.3, 0, colored_result);
+    
+    return colored_result;
 }

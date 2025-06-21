@@ -69,6 +69,11 @@ install(FILES README.md
     COMPONENT Documentation
 )
 
+install(DIRECTORY debug_output/
+    DESTINATION debug_results
+    OPTIONAL
+)
+
 if(WIN32 AND OpenCV_DIR)
     string(REPLACE "/lib" "/bin" OPENCV_BIN_DIR "${OpenCV_DIR}")
     
