@@ -2,6 +2,7 @@
 build/
 cmake-build-*/
 
+
 # Compiled binaries
 *.exe
 *.out
@@ -23,13 +24,6 @@ install_manifest.txt
 .idea/
 *.vcxproj*
 *.sln
-
-# Generated images
-*.png
-*.jpg
-*.jpeg
-*.bmp
-*.tiff
 
 # Temporary files
 *~
