@@ -111,21 +111,26 @@ int batchProcessing() {
     return 0;
 }
 
-// Остальные функции без изменений...
+// Получить все изображения из папки examples
 vector<string> getExampleImages() {
-    vector<string> examples;
-    examples.push_back("examples/shadow1.jpg");
-    examples.push_back("examples/shadow2.jpg");
-    examples.push_back("examples/shadow3.jpg");
-    // Add your new images here if you want to see them in the menu
-    
-    vector<string> valid_examples;
-    for (const string& path : examples) {
-        if (!imread(path).empty()) {
-            valid_examples.push_back(path);
+    vector<string> image_files;
+    vector<string> extensions = {".jpg", ".jpeg", ".png", ".bmp"};
+    try {
+        for (const auto& entry : filesystem::directory_iterator("examples")) {
+            if (entry.is_regular_file()) {
+                string file_ext = entry.path().extension().string();
+                transform(file_ext.begin(), file_ext.end(), file_ext.begin(),
+                    [](unsigned char c){ return std::tolower(c); });
+                if (find(extensions.begin(), extensions.end(), file_ext) != extensions.end()) {
+                    image_files.push_back(entry.path().string());
+                }
+            }
         }
+    } catch (const exception& e) {
+        cout << "Error accessing examples folder: " << e.what() << endl;
     }
-    return valid_examples;
+    sort(image_files.begin(), image_files.end());
+    return image_files;
 }
 
 void printHeader() {
@@ -142,34 +147,40 @@ void printImageStats(const Mat& image, const string& path) {
 
 string selectImage() {
     vector<string> examples = getExampleImages();
-    printHeader();
-    cout << "\nPlease choose an image to process:\n" << endl;
-    
-    if (!examples.empty()) {
-        cout << "Available example images:" << endl;
-        for (size_t i = 0; i < examples.size(); ++i) {
-            cout << "  " << (i + 1) << ". " << examples[i] << endl;
+    while (true) {
+        printHeader();
+        cout << "\nPlease choose an image to process:\n" << endl;
+        if (!examples.empty()) {
+            cout << "Available example images:" << endl;
+            for (size_t i = 0; i < examples.size(); ++i) {
+                cout << "  " << (i + 1) << ". " << examples[i] << endl;
+            }
+            cout << endl;
         }
-        cout << endl;
-    }
-    
-    cout << "  0. Enter custom image path" << endl;
-    cout << "\nChoice (1-" << examples.size() << " or 0): ";
-    
-    int choice;
-    cin >> choice;
-    
-    if (choice >= 1 && choice <= static_cast<int>(examples.size())) {
-        return examples[choice - 1];
-    } else if (choice == 0) {
-        cout << "Enter image path: ";
-        string custom_path;
-        cin.ignore();
-        getline(cin, custom_path);
-        return custom_path;
-    } else {
-        cout << "Invalid choice. Please try again." << endl;
-        return "";
+        cout << "  0. Enter custom image path" << endl;
+        cout << "  Q. Quit" << endl;
+        cout << "\nChoice (1-" << examples.size() << " or 0, Q): ";
+        string input;
+        cin >> input;
+        if (input == "Q" || input == "q") return "";
+        int choice = -1;
+        try { choice = stoi(input); } catch (...) { choice = -1; }
+        if (choice >= 1 && choice <= static_cast<int>(examples.size())) {
+            return examples[choice - 1];
+        } else if (choice == 0) {
+            cout << "Enter image path: ";
+            string custom_path;
+            cin.ignore();
+            getline(cin, custom_path);
+            if (!custom_path.empty() && !imread(custom_path).empty()) {
+                return custom_path;
+            } else {
+                cout << "[ERROR] Cannot load image '" << custom_path << "'. Try again." << endl;
+                continue;
+            }
+        } else {
+            cout << "Invalid choice. Please try again." << endl;
+        }
     }
 }
 
@@ -186,68 +197,43 @@ void printControls() {
     cout << "\n[CONTROLS]" << endl;
     cout << "  ESC / Q  - Exit application" << endl;
     cout << "  S        - Save results to current folder" << endl;
-    cout << "  N        - Load next image (interactive mode)" << endl;
+    cout << "  N        - Load next image" << endl;
 }
 
-int main(int argc, char** argv) {
-    if (argc == 2 && string(argv[1]) == "--batch") {
-        return batchProcessing();
-    }
-
-    string image_path;
-    if (argc == 2) {
-        image_path = argv[1];
-        cout << "[COMMAND LINE MODE]" << endl;
-    } else {
-        image_path = selectImage();
-        if (image_path.empty()) {
-            cout << "No image selected. Exiting..." << endl;
-            return 0;
-        }
-    }
-
+void processAndShow(const string& image_path) {
     Mat input = imread(image_path);
     if (input.empty()) {
         cerr << "ERROR: Cannot load image '" << image_path << "'" << endl;
-        return -1;
+        return;
     }
-
     printImageStats(input, image_path);
-
     ShadowLedentifier detector;
-    
     auto start_time = chrono::high_resolution_clock::now();
     Mat shadow_mask = detector.processImage(input);
     auto end_time = chrono::high_resolution_clock::now();
     auto duration = chrono::duration_cast<chrono::milliseconds>(end_time - start_time);
-    
     if (shadow_mask.empty()) {
         cerr << "ERROR: Shadow segmentation failed!" << endl;
-        return -1;
+        return;
     }
-
     cout << "  Processing time: " << duration.count() << " ms" << endl;
-
     Mat colored_result = detector.createColoredMask(shadow_mask, input);
     Mat display_original = resizeForDisplay(input);
     Mat display_mask = resizeForDisplay(shadow_mask);
     Mat display_result = resizeForDisplay(colored_result);
-
     cout << "\n[SUCCESS] Processing completed!" << endl;
     printControls();
-
     namedWindow("Original Image", WINDOW_AUTOSIZE);
     namedWindow("Shadow Mask", WINDOW_AUTOSIZE);
     namedWindow("Segmentation Result", WINDOW_AUTOSIZE);
-
     imshow("Original Image", display_original);
     imshow("Shadow Mask", display_mask);
     imshow("Segmentation Result", display_result);
-
     while (true) {
         int key = waitKey(30) & 0xFF;
         if (key == 27 || key == 'q' || key == 'Q') {
-            break;
+            destroyAllWindows();
+            exit(0);
         } else if (key == 's' || key == 'S') {
             string base_name = image_path;
             size_t dot_pos = base_name.find_last_of('.');
@@ -261,11 +247,31 @@ int main(int argc, char** argv) {
             cout << "\n[SAVED] Results saved successfully." << endl;
         } else if (key == 'n' || key == 'N') {
             destroyAllWindows();
-            return main(1, argv);
+            break;
         }
     }
-
     destroyAllWindows();
+}
+
+int main(int argc, char** argv) {
+    if (argc == 2 && string(argv[1]) == "--batch") {
+        return batchProcessing();
+    }
+    while (true) {
+        string image_path;
+        if (argc == 2) {
+            image_path = argv[1];
+            argc = 1; // чтобы не зациклиться на одном и том же
+        } else {
+            image_path = selectImage();
+            if (image_path.empty()) {
+                cout << "No image selected. Exiting..." << endl;
+                break;
+            }
+        }
+        processAndShow(image_path);
+        // После обработки возвращаемся к выбору изображения
+    }
     cout << "Application closed." << endl;
     return 0;
 }
